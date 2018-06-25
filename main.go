@@ -29,8 +29,8 @@ func createTransactionHandler(w http.ResponseWriter, req *http.Request) {
 
 func getMineHandler(w http.ResponseWriter, req *http.Request) {
 	timestamp := time.Now().Unix()
-	proof := blockChain.ProofOfWork(timestamp)
-	block := blockChain.AddNewBlock(timestamp, proof)
+	nonce := blockChain.ProofOfWork(timestamp)
+	block := blockChain.AddNewBlock(timestamp, nonce)
 	if block == nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}

@@ -18,15 +18,15 @@ const GenesisPreviousHash = "000000000000000000000000000000000000000000000000000
 
 func NewBlockChain() *BlockChain {
 	blockChain := &BlockChain{}
-	proof := blockChain.ProofOfWork(GenesisTimestamp)
-	blockChain.AddNewBlock(GenesisTimestamp, proof)
+	nonce := blockChain.ProofOfWork(GenesisTimestamp)
+	blockChain.AddNewBlock(GenesisTimestamp, nonce)
 	return blockChain
 }
 
-func (blockChain *BlockChain) AddNewBlock(timestamp int64, proof int) *Block {
+func (blockChain *BlockChain) AddNewBlock(timestamp int64, nonce int) *Block {
 	block := NewBlock(
 		timestamp,
-		proof,
+		nonce,
 		blockChain.previousHash(),
 		blockChain.CurrentTransactions,
 	)
@@ -60,17 +60,17 @@ func (blockChain *BlockChain) previousHash() string {
 }
 
 func (blockChain *BlockChain) ProofOfWork(timestamp int64) int {
-	proof := 0
-	for !blockChain.validProof(timestamp, proof) {
-		proof++
+	nonce := 0
+	for !blockChain.validNonce(timestamp, nonce) {
+		nonce++
 	}
-	return proof
+	return nonce
 }
 
-func (blockChain *BlockChain) validProof(timestamp int64, proof int) bool {
+func (blockChain *BlockChain) validNonce(timestamp int64, nonce int) bool {
 	block := NewBlock(
 		timestamp,
-		proof,
+		nonce,
 		blockChain.previousHash(),
 		blockChain.CurrentTransactions,
 	)
@@ -81,11 +81,11 @@ func (blockChain *BlockChain) AddNode(node string) {
 	blockChain.Nodes = append(blockChain.Nodes, node)
 }
 
-func (blockChain *BlockChain) validChain(chain []Block) bool {
+func (blockChain *BlockChain) isValidChain(chain []Block) bool {
 	lastBlock := chain[0]
 	for i := 1; i < len(chain); i++ {
 		block := chain[i]
-		if block.PreviousHash != lastBlock.Hash || !block.BlockValidProof() {
+		if block.PreviousHash != lastBlock.Hash || !block.BlockIsValid() {
 			return false
 		}
 		lastBlock = block
@@ -114,7 +114,7 @@ func (blockChain *BlockChain) ResolveConflicts() bool {
 			continue
 		}
 
-		if len(chain) > maxLength && blockChain.validChain(chain) {
+		if len(chain) > maxLength && blockChain.isValidChain(chain) {
 			newChain = chain
 		}
 	}

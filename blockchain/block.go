@@ -8,7 +8,7 @@ import (
 
 type Block struct {
 	Timestamp    int64         `json:"timestamp"`
-	Proof        int           `json:"proof"`
+	Nonce        int           `json:"nonce"`
 	Hash         string        `json:"hash"`
 	PreviousHash string        `json:"previous_hash"`
 	Transactions []Transaction `json:"transactions"`
@@ -16,14 +16,14 @@ type Block struct {
 
 const BlockDifficulty = 5
 
-func NewBlock(timestamp int64, proof int, previousHash string, transactions []Transaction) *Block {
+func NewBlock(timestamp int64, nonce int, previousHash string, transactions []Transaction) *Block {
 	block := &Block{
 		Timestamp:    timestamp,
-		Proof:        proof,
+		Nonce:        nonce,
 		PreviousHash: previousHash,
 		Transactions: transactions,
 	}
-	if !block.BlockValidProof() {
+	if !block.BlockIsValid() {
 		return nil
 	}
 
@@ -33,12 +33,12 @@ func NewBlock(timestamp int64, proof int, previousHash string, transactions []Tr
 func (block *Block) blockHash() string {
 	hashSeed := struct {
 		Timestamp    int64         `json:"timestamp"`
-		Proof        int           `json:"proof"`
+		Nonce        int           `json:"nonce"`
 		PreviousHash string        `json:"previous_hash"`
 		Transactions []Transaction `json:"transactions"`
 	}{
 		Timestamp:    block.Timestamp,
-		Proof:        block.Proof,
+		Nonce:        block.Nonce,
 		PreviousHash: block.PreviousHash,
 		Transactions: block.Transactions,
 	}
@@ -54,7 +54,7 @@ func (block *Block) blockHash() string {
 	return block.Hash
 }
 
-func (block *Block) BlockValidProof() bool {
+func (block *Block) BlockIsValid() bool {
 	hash := block.blockHash()
 	for i := 0; i < BlockDifficulty; i++ {
 		if hash[i:i+1] != "0" {
