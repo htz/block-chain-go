@@ -28,18 +28,12 @@ func createTransactionHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func getMineHandler(w http.ResponseWriter, req *http.Request) {
-	lastBlock := blockChain.LastBlock()
-	lastProof := lastBlock.Proof
 	timestamp := time.Now().Unix()
-	proof := blockChain.ProofOfWork(timestamp, lastProof)
-
-	transaction := &blockchain.Transaction{
-		Sender:    "0",
-		Recipient: nodeIdentifire,
-		Amount:    1,
+	proof := blockChain.ProofOfWork(timestamp)
+	block := blockChain.AddNewBlock(timestamp, proof)
+	if block == nil {
+		w.WriteHeader(http.StatusBadRequest)
 	}
-	blockChain.AddNewTransaction(transaction)
-	block := blockChain.AddNewBlock(timestamp, proof, "")
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if err := json.NewEncoder(w).Encode(block); err != nil {
@@ -91,7 +85,7 @@ func listenAddress() string {
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/transactions", createTransactionHandler).Methods("POST")
-	router.HandleFunc("/mine", getMineHandler).Methods("GET")
+	router.HandleFunc("/mine", getMineHandler).Methods("POST")
 	router.HandleFunc("/chains", getChainsHandler).Methods("GET")
 	router.HandleFunc("/nodes", registerNodesHandler).Methods("POST")
 	router.HandleFunc("/nodes/resolve", consensusNodesHandler).Methods("GET")

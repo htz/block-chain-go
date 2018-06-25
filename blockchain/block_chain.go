@@ -13,53 +13,68 @@ type BlockChain struct {
 	Nodes               []string      `json:"nodes"`
 }
 
+const GenesisTimestamp = int64(0)
+const GenesisPreviousHash = "0000000000000000000000000000000000000000000000000000000000000000"
+
 func NewBlockChain() *BlockChain {
 	blockChain := &BlockChain{}
-	// create genesis block
-	blockChain.AddNewBlock(0, 100, "1")
+	proof := blockChain.ProofOfWork(GenesisTimestamp)
+	blockChain.AddNewBlock(GenesisTimestamp, proof)
 	return blockChain
 }
 
-func (blockChain *BlockChain) AddNewBlock(timestamp int64, proof int, previousHash string) *Block {
-	block := Block{
-		Timestamp:    timestamp,
-		Transactions: blockChain.CurrentTransactions,
-		Proof:        proof,
-		PreviousHash: previousHash,
+func (blockChain *BlockChain) AddNewBlock(timestamp int64, proof int) *Block {
+	block := NewBlock(
+		timestamp,
+		proof,
+		blockChain.previousHash(),
+		blockChain.CurrentTransactions,
+	)
+	if block == nil {
+		return nil
 	}
-	if block.PreviousHash == "" {
-		block.PreviousHash = blockChain.LastBlock().BlockHash()
-	}
+
 	blockChain.CurrentTransactions = nil
-	blockChain.Chain = append(blockChain.Chain, block)
-	return &block
+	blockChain.Chain = append(blockChain.Chain, *block)
+
+	return block
 }
 
 func (blockChain *BlockChain) AddNewTransaction(transaction *Transaction) {
 	blockChain.CurrentTransactions = append(blockChain.CurrentTransactions, *transaction)
 }
 
-func (blockChain *BlockChain) LastBlock() *Block {
+func (blockChain *BlockChain) lastBlock() *Block {
+	if blockChain.Chain == nil {
+		return nil
+	}
 	return &blockChain.Chain[len(blockChain.Chain)-1]
 }
 
-func (blockChain *BlockChain) ProofOfWork(timestamp int64, lastProof int) int {
+func (blockChain *BlockChain) previousHash() string {
+	lastBlock := blockChain.lastBlock()
+	if lastBlock != nil {
+		return lastBlock.Hash
+	}
+	return GenesisPreviousHash
+}
+
+func (blockChain *BlockChain) ProofOfWork(timestamp int64) int {
 	proof := 0
-	for !blockChain.validProof(timestamp, lastProof, proof) {
+	for !blockChain.validProof(timestamp, proof) {
 		proof++
 	}
 	return proof
 }
 
-func (blockChain *BlockChain) validProof(timestamp int64, lastProof int, proof int) bool {
-	block := &Block{
-		Timestamp:    timestamp,
-		Transactions: blockChain.CurrentTransactions,
-		Proof:        proof,
-		PreviousHash: blockChain.LastBlock().PreviousHash,
-	}
-	hash := block.BlockHash()
-	return string(hash[:4]) == "0000"
+func (blockChain *BlockChain) validProof(timestamp int64, proof int) bool {
+	block := NewBlock(
+		timestamp,
+		proof,
+		blockChain.previousHash(),
+		blockChain.CurrentTransactions,
+	)
+	return block != nil
 }
 
 func (blockChain *BlockChain) AddNode(node string) {
@@ -70,10 +85,7 @@ func (blockChain *BlockChain) validChain(chain []Block) bool {
 	lastBlock := chain[0]
 	for i := 1; i < len(chain); i++ {
 		block := chain[i]
-		if block.PreviousHash != lastBlock.BlockHash() {
-			return false
-		}
-		if !blockChain.validProof(block.Timestamp, lastBlock.Proof, block.Proof) {
+		if block.PreviousHash != lastBlock.Hash || !block.BlockValidProof() {
 			return false
 		}
 		lastBlock = block
