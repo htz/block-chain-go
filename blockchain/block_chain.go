@@ -19,11 +19,11 @@ const GenesisPreviousHash = "000000000000000000000000000000000000000000000000000
 func NewBlockChain() *BlockChain {
 	blockChain := &BlockChain{}
 	nonce := blockChain.ProofOfWork(GenesisTimestamp)
-	blockChain.AddNewBlock(GenesisTimestamp, nonce)
+	blockChain.AddBlock(GenesisTimestamp, nonce)
 	return blockChain
 }
 
-func (blockChain *BlockChain) AddNewBlock(timestamp int64, nonce int) *Block {
+func (blockChain *BlockChain) AddBlock(timestamp int64, nonce int) *Block {
 	block := NewBlock(
 		timestamp,
 		nonce,
@@ -35,12 +35,16 @@ func (blockChain *BlockChain) AddNewBlock(timestamp int64, nonce int) *Block {
 	}
 
 	blockChain.CurrentTransactions = nil
-	blockChain.Chain = append(blockChain.Chain, *block)
+	blockChain.appendBlock(block)
 
 	return block
 }
 
-func (blockChain *BlockChain) AddNewTransaction(transaction *Transaction) {
+func (blockChain *BlockChain) appendBlock(block *Block) {
+	blockChain.Chain = append(blockChain.Chain, *block)
+}
+
+func (blockChain *BlockChain) AddTransaction(transaction *Transaction) {
 	blockChain.CurrentTransactions = append(blockChain.CurrentTransactions, *transaction)
 }
 
@@ -85,7 +89,7 @@ func (blockChain *BlockChain) isValidChain(chain []Block) bool {
 	lastBlock := chain[0]
 	for i := 1; i < len(chain); i++ {
 		block := chain[i]
-		if block.PreviousHash != lastBlock.Hash || !block.BlockIsValid() {
+		if block.PreviousHash != lastBlock.Hash || !block.IsValid() {
 			return false
 		}
 		lastBlock = block
@@ -127,7 +131,7 @@ func (blockChain *BlockChain) ResolveConflicts() bool {
 	return true
 }
 
-func (blockChain *BlockChain) DumpBlockChain() {
+func (blockChain *BlockChain) PrintDump() {
 	m, err := json.MarshalIndent(blockChain, "", "  ")
 	if err != nil {
 		fmt.Println(err)

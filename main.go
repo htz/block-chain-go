@@ -22,15 +22,15 @@ func createTransactionHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	blockChain.AddNewTransaction(&transaction)
+	blockChain.AddTransaction(&transaction)
 	w.WriteHeader(http.StatusCreated)
-	blockChain.DumpBlockChain()
+	blockChain.PrintDump()
 }
 
 func getMineHandler(w http.ResponseWriter, req *http.Request) {
 	timestamp := time.Now().Unix()
 	nonce := blockChain.ProofOfWork(timestamp)
-	block := blockChain.AddNewBlock(timestamp, nonce)
+	block := blockChain.AddBlock(timestamp, nonce)
 	if block == nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -39,7 +39,7 @@ func getMineHandler(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewEncoder(w).Encode(block); err != nil {
 		log.Println("Error:", err)
 	}
-	blockChain.DumpBlockChain()
+	blockChain.PrintDump()
 }
 
 func getChainsHandler(w http.ResponseWriter, req *http.Request) {
@@ -47,7 +47,7 @@ func getChainsHandler(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewEncoder(w).Encode(blockChain.Chain); err != nil {
 		log.Println("Error:", err)
 	}
-	blockChain.DumpBlockChain()
+	blockChain.PrintDump()
 }
 
 func registerNodesHandler(w http.ResponseWriter, req *http.Request) {
@@ -61,7 +61,7 @@ func registerNodesHandler(w http.ResponseWriter, req *http.Request) {
 		blockChain.AddNode(node)
 	}
 	w.WriteHeader(http.StatusCreated)
-	blockChain.DumpBlockChain()
+	blockChain.PrintDump()
 }
 
 func consensusNodesHandler(w http.ResponseWriter, req *http.Request) {
@@ -71,7 +71,7 @@ func consensusNodesHandler(w http.ResponseWriter, req *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
-	blockChain.DumpBlockChain()
+	blockChain.PrintDump()
 }
 
 func listenAddress() string {

@@ -23,14 +23,14 @@ func NewBlock(timestamp int64, nonce int, previousHash string, transactions []Tr
 		PreviousHash: previousHash,
 		Transactions: transactions,
 	}
-	if !block.BlockIsValid() {
+	if !block.IsValid() {
 		return nil
 	}
 
 	return block
 }
 
-func (block *Block) blockHash() string {
+func (block *Block) hash() string {
 	hashSeed := struct {
 		Timestamp    int64         `json:"timestamp"`
 		Nonce        int           `json:"nonce"`
@@ -54,8 +54,8 @@ func (block *Block) blockHash() string {
 	return block.Hash
 }
 
-func (block *Block) BlockIsValid() bool {
-	hash := block.blockHash()
+func (block *Block) IsValid() bool {
+	hash := block.hash()
 	for i := 0; i < BlockDifficulty; i++ {
 		if hash[i:i+1] != "0" {
 			return false
