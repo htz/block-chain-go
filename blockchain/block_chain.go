@@ -41,6 +41,7 @@ func (blockChain *BlockChain) AddBlock(timestamp int64, nonce int) *Block {
 }
 
 func (blockChain *BlockChain) appendBlock(block *Block) {
+	block.Height = len(blockChain.Chain)
 	blockChain.Chain = append(blockChain.Chain, *block)
 }
 

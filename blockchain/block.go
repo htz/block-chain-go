@@ -7,6 +7,7 @@ import (
 )
 
 type Block struct {
+	Height       int           `json:"height"`
 	Timestamp    int64         `json:"timestamp"`
 	Nonce        int           `json:"nonce"`
 	Hash         string        `json:"hash"`
