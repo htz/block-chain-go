@@ -12,16 +12,18 @@ type Block struct {
 	Nonce        int           `json:"nonce"`
 	Hash         string        `json:"hash"`
 	PreviousHash string        `json:"previous_hash"`
+	MerkleHash   string        `json:"merkle_hash"`
 	Transactions []Transaction `json:"transactions"`
 }
 
 const BlockDifficulty = 5
 
-func NewBlock(timestamp int64, nonce int, previousHash string, transactions []Transaction) *Block {
+func NewBlock(timestamp int64, nonce int, previousHash string, merkleHash string, transactions []Transaction) *Block {
 	block := &Block{
 		Timestamp:    timestamp,
 		Nonce:        nonce,
 		PreviousHash: previousHash,
+		MerkleHash:   merkleHash,
 		Transactions: transactions,
 	}
 	if !block.IsValid() {
@@ -33,26 +35,24 @@ func NewBlock(timestamp int64, nonce int, previousHash string, transactions []Tr
 
 func (block *Block) hash() string {
 	hashSeed := struct {
-		Timestamp    int64         `json:"timestamp"`
-		Nonce        int           `json:"nonce"`
-		PreviousHash string        `json:"previous_hash"`
-		Transactions []Transaction `json:"transactions"`
+		Timestamp    int64  `json:"timestamp"`
+		Nonce        int    `json:"nonce"`
+		PreviousHash string `json:"previous_hash"`
+		MerkleHash   string `json:"merkle_hash"`
 	}{
 		Timestamp:    block.Timestamp,
 		Nonce:        block.Nonce,
 		PreviousHash: block.PreviousHash,
-		Transactions: block.Transactions,
+		MerkleHash:   block.MerkleHash,
 	}
 
 	marshal, err := json.Marshal(hashSeed)
 	if err != nil {
 		return ""
 	}
-
 	bytes := sha256.Sum256([]byte(marshal))
-	block.Hash = hex.EncodeToString(bytes[:])
 
-	return block.Hash
+	return hex.EncodeToString(bytes[:])
 }
 
 func (block *Block) IsValid() bool {
@@ -62,5 +62,6 @@ func (block *Block) IsValid() bool {
 			return false
 		}
 	}
+	block.Hash = hash
 	return true
 }

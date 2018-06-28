@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 )
 
 type BlockChain struct {
-	Chain               []Block       `json:"chain"`
-	CurrentTransactions []Transaction `json:"current_transactions"`
-	Nodes               []string      `json:"nodes"`
+	Chain           []Block       `json:"chain"`
+	TransactionPool []Transaction `json:"current_transactions"`
+	Nodes           []string      `json:"nodes"`
 }
 
 const GenesisTimestamp = int64(0)
@@ -24,17 +25,19 @@ func NewBlockChain() *BlockChain {
 }
 
 func (blockChain *BlockChain) AddBlock(timestamp int64, nonce int) *Block {
+	merkleHash := CalcMerkleHash(blockChain.TransactionPool)
 	block := NewBlock(
 		timestamp,
 		nonce,
 		blockChain.previousHash(),
-		blockChain.CurrentTransactions,
+		merkleHash,
+		blockChain.TransactionPool,
 	)
 	if block == nil {
 		return nil
 	}
 
-	blockChain.CurrentTransactions = nil
+	blockChain.TransactionPool = nil
 	blockChain.appendBlock(block)
 
 	return block
@@ -46,7 +49,8 @@ func (blockChain *BlockChain) appendBlock(block *Block) {
 }
 
 func (blockChain *BlockChain) AddTransaction(transaction *Transaction) {
-	blockChain.CurrentTransactions = append(blockChain.CurrentTransactions, *transaction)
+	transaction.Timestamp = time.Now().Unix()
+	blockChain.TransactionPool = append(blockChain.TransactionPool, *transaction)
 }
 
 func (blockChain *BlockChain) lastBlock() *Block {
@@ -66,18 +70,20 @@ func (blockChain *BlockChain) previousHash() string {
 
 func (blockChain *BlockChain) ProofOfWork(timestamp int64) int {
 	nonce := 0
-	for !blockChain.validNonce(timestamp, nonce) {
+	merkleHash := CalcMerkleHash(blockChain.TransactionPool)
+	for !blockChain.validNonce(timestamp, merkleHash, nonce) {
 		nonce++
 	}
 	return nonce
 }
 
-func (blockChain *BlockChain) validNonce(timestamp int64, nonce int) bool {
+func (blockChain *BlockChain) validNonce(timestamp int64, merkleHash string, nonce int) bool {
 	block := NewBlock(
 		timestamp,
 		nonce,
 		blockChain.previousHash(),
-		blockChain.CurrentTransactions,
+		merkleHash,
+		blockChain.TransactionPool,
 	)
 	return block != nil
 }
