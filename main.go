@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"encoding/json"
@@ -7,8 +7,9 @@ import (
 	"os"
 	"time"
 
+	"blockchain"
+
 	"github.com/gorilla/mux"
-	"github.com/htz/block-chain-go/blockchain"
 	"github.com/satori/go.uuid"
 )
 
@@ -82,7 +83,7 @@ func listenAddress() string {
 	return ":" + port
 }
 
-func main() {
+func init() {
 	router := mux.NewRouter()
 	router.HandleFunc("/transactions", createTransactionHandler).Methods("POST")
 	router.HandleFunc("/mine", getMineHandler).Methods("POST")
@@ -90,8 +91,4 @@ func main() {
 	router.HandleFunc("/nodes", registerNodesHandler).Methods("POST")
 	router.HandleFunc("/nodes/resolve", consensusNodesHandler).Methods("GET")
 	http.Handle("/", router)
-
-	listenAddress := listenAddress()
-	log.Printf("Listening on %s...\n", listenAddress)
-	http.ListenAndServe(listenAddress, nil)
 }
