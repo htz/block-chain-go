@@ -1,5 +1,4 @@
-application: blockchaingo
-version: 1
+version: 3
 runtime: go
 api_version: go1
 handlers:
@@ -9,3 +8,4 @@ nobuild_files:
 - vendor
 skip_files:
 - vendor/.*$
+- .git
