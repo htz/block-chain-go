@@ -3,17 +3,16 @@ jobs:
   deploy:
     working_directory: /go/src/github.com/htz/block-chain-go
     docker:
-      - image: mercari/appengine-go:1.9-slim
+      - image: google/cloud-sdk
     steps:
       - checkout
       - run:
           name: Deploy to App Engine
           command: |
-            gcloud components update
-            chmod +x /usr/lib/google-cloud-sdk/platform/google_appengine/appcfg.py
             go get github.com/golang/dep/cmd/dep
             dep ensure
             echo $GCP_SERVICE_KEY | base64 --decode > $HOME/.secret-key.json
+            go get -u google.golang.org/appengine
             gcloud auth activate-service-account --key-file ${HOME}/.secret-key.json
             gcloud config set project $GCP_PROJECT_ID
             appcfg.py --no_cookies --application=$GCP_PROJECT_ID --version=$(echo $CIRCLE_BRANCH | sed "s/\//\-/g") --oauth2_access_token $(gcloud auth print-access-token) update ./app.yaml
