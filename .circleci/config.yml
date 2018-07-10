@@ -3,19 +3,26 @@ jobs:
   deploy:
     working_directory: /go/src/github.com/htz/block-chain-go
     docker:
-      - image: google/cloud-sdk
+      - image: golang:1.10.3
     steps:
+      - run:
+          name: Initialize
+          command: |
+            curl https://sdk.cloud.google.com | bash -s -- --disable-prompts --install-dir=/usr/lib
+            echo 'export PATH=/usr/lib/google-cloud-sdk/bin:/usr/lib/google-cloud-sdk/platform/google_appengine:$PATH' >> $BASH_ENV
+            source $BASH_ENV
+            gcloud config set core/disable_usage_reporting true
+            gcloud config set component_manager/disable_update_check true
+            gcloud config set metrics/environment github_docker_image
+            gcloud components install app-engine-go
+            chmod +x /usr/lib/google-cloud-sdk/platform/google_appengine/appcfg.py
       - checkout
       - run:
           name: Deploy to App Engine
           command: |
-            curl -O https://storage.googleapis.com/golang/go1.10.3.linux-amd64.tar.gz
-            tar -C /usr/local -xzf go1.10.3.linux-amd64.tar.gz
-            rm go1.10.3.linux-amd64.tar.gz
             go get github.com/golang/dep/cmd/dep
             dep ensure
             echo $GCP_SERVICE_KEY | base64 --decode > $HOME/.secret-key.json
-            go get -u google.golang.org/appengine
             gcloud auth activate-service-account --key-file ${HOME}/.secret-key.json
             gcloud config set project $GCP_PROJECT_ID
             appcfg.py --no_cookies --application=$GCP_PROJECT_ID --version=$(echo $CIRCLE_BRANCH | sed "s/\//\-/g") --oauth2_access_token $(gcloud auth print-access-token) update ./app.yaml

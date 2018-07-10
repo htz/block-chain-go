@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"blockchain"
+	"github.com/htz/block-chain-go/blockchain"
 
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
