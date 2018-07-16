@@ -24,12 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-[metadata.heroku]
-  root-package = "github.com/htz/block-chain-go"
-  go-version = "go1.10.3"
-  install = ["."]
-  ensure = "true"
-
 [[constraint]]
   name = "github.com/gorilla/mux"
   version = "1.6.2"
