@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"encoding/json"
@@ -6,15 +6,13 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/htz/block-chain-go/blockchain"
+	"blockchain"
 
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 )
 
 var blockChain = blockchain.NewBlockChain()
-var nodeIdentifire = uuid.Must(uuid.NewV4()).String()
+//var nodeIdentifire = uuid.Must(uuid.NewV4()).String()
 
 func createTransactionHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
